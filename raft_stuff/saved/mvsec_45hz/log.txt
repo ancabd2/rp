@@ -1,0 +1,6 @@
+======================================== test ========================================
+================================== Dataloader Summary ====================================
+Loader Type:		MvsecFlowRecurrent for test
+Sequence Length:	1
+Step Size:		1
+Framerate:		45
