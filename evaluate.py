@@ -218,41 +218,6 @@ def validate_dsec(model,
                     file_index=int(batch['file_index'][batch_idx].item()),
                 )
 
-    '''for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, _ = val_dataset[val_id]
-
-        image1 = image1[None].cuda()
-        image2 = image2[None].cuda()
-
-        results_dict = model(image1, image2,
-                             attn_splits_list=attn_splits_list,
-                             corr_radius_list=corr_radius_list,
-                             prop_radius_list=prop_radius_list,
-                             )
-
-        flow_pr = results_dict['flow_preds'][-1]  # [B, 2, H, W]
-
-        assert flow_pr.size()[-2:] == flow_gt.size()[-2:]
-
-        epe = torch.sum((flow_pr[0].cpu() - flow_gt) ** 2, dim=0).sqrt()
-        epe_list.append(epe.view(-1).numpy())
-
-        print(f"entry {val_id}: epe={epe.view(-1).numpy()}")
-
-        if with_speed_metric:
-            flow_gt_speed = torch.sum(flow_gt ** 2, dim=0).sqrt()
-            valid_mask = (flow_gt_speed < 10)
-            if valid_mask.max() > 0:
-                s0_10_list.append(epe[valid_mask].cpu().numpy())
-
-            valid_mask = (flow_gt_speed >= 10) * (flow_gt_speed <= 40)
-            if valid_mask.max() > 0:
-                s10_40_list.append(epe[valid_mask].cpu().numpy())
-
-            valid_mask = (flow_gt_speed > 40)
-            if valid_mask.max() > 0:
-                s40plus_list.append(epe[valid_mask].cpu().numpy())
-    '''
     epe_all = np.concatenate(epe_list)
     epe = np.mean(epe_all)
     px1 = np.mean(epe_all > 1)

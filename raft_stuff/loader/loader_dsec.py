@@ -1,3 +1,4 @@
+import csv
 import math
 from pathlib import Path
 from typing import Dict, Tuple
@@ -195,13 +196,14 @@ class Sequence(Dataset):
         self.name_idx = name_idx
         self.visualize_samples = visualize
         # Get Test Timestamp File
-        test_timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
-        assert test_timestamp_file.is_file()
-        file = np.genfromtxt(
-            test_timestamp_file,
-            delimiter=','
-        )
-        self.idx_to_visualize = file[:,2]
+        if mode == 'test':
+            test_timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
+            assert test_timestamp_file.is_file()
+            file = np.genfromtxt(
+                test_timestamp_file,
+                delimiter=','
+            )
+            self.idx_to_visualize = file[:,2]
 
         # Save output dimensions
         self.height = 480
@@ -221,14 +223,26 @@ class Sequence(Dataset):
         self.delta_t_us = delta_t_ms * 1000
 
         #Load and compute timestamps and indices
-        timestamps_images = np.loadtxt(seq_path / 'image_timestamps.txt', dtype='int64')
+        if mode == 'test':
+            timestamps_images = np.loadtxt(seq_path / 'image_timestamps.txt', dtype='int64')
+        else:
+            with open(seq_path / 'forward_timestamps.txt') as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                next(csv_reader, None)  # skip the headers
+                timestamps_images = []
+                for row in csv_reader:
+                    timestamps_images.append(int(row[1]))
+        
         image_indices = np.arange(len(timestamps_images))
         # But only use every second one because we train at 10 Hz, and we leave away the 1st & last one
         self.timestamps_flow = timestamps_images[::2][1:-1]
         self.indices = image_indices[::2][1:-1]
 
         # Left events only
-        ev_dir_location = seq_path / 'events_left'
+        if mode == 'train':
+            ev_dir_location = seq_path / 'events' / 'left'
+        else :
+            ev_dir_location = seq_path / 'events_left'
         ev_data_file = ev_dir_location / 'events.h5'
         ev_rect_file = ev_dir_location / 'rectify_map.h5'
 
@@ -408,24 +422,25 @@ class SequenceRecurrent(Sequence):
 
 class DatasetProvider:
     def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=15,
-                 type='standard', config=None, visualize=False):
+                 type='standard', config=None, visualize=False, mode='test'):
         test_path = dataset_path / 'test'
         assert dataset_path.is_dir(), str(dataset_path)
         assert test_path.is_dir(), str(test_path)
         assert delta_t_ms == 100
         self.config=config
+        self.mode = mode
         self.name_mapper_test = []
 
         test_sequences = list()
         for child in test_path.iterdir():
             self.name_mapper_test.append(str(child).split("/")[-1])
             if type == 'standard':
-                test_sequences.append(Sequence(child, representation_type, 'test', delta_t_ms, num_bins,
+                test_sequences.append(Sequence(child, representation_type, mode, delta_t_ms, num_bins,
                                                transforms=[],
                                                name_idx=len(self.name_mapper_test)-1,
                                                visualize=visualize))
             elif type == 'warm_start':
-                test_sequences.append(SequenceRecurrent(child, representation_type, 'test', delta_t_ms, num_bins,
+                test_sequences.append(SequenceRecurrent(child, representation_type, mode, delta_t_ms, num_bins,
                                                         transforms=[], sequence_length=1,
                                                         name_idx=len(self.name_mapper_test)-1,
                                                         visualize=visualize))
@@ -443,5 +458,48 @@ class DatasetProvider:
 
     def summary(self, logger):
         logger.write_line("================================== Dataloader Summary ====================================", True)
+        logger.write_line("Purpose:\t\t" + self.mode, True)
         logger.write_line("Loader Type:\t\t" + self.__class__.__name__, True)
         logger.write_line("Number of Voxel Bins: {}".format(self.test_dataset.datasets[0].num_bins), True)
+
+class DatasetProviderTrain:
+    def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=15,
+                 type='standard'):
+        test_path = dataset_path
+        assert dataset_path.is_dir(), str(dataset_path)
+        assert test_path.is_dir(), str(test_path)
+        assert delta_t_ms == 100
+
+        self.name_mapper_test = []
+
+        test_sequences = list()
+        for child in test_path.iterdir():
+            self.name_mapper_test.append(str(child).split("/")[-1])
+            if type == 'standard':
+                test_sequences.append(Sequence(child, representation_type, 'train', delta_t_ms, num_bins,
+                                               transforms=[],
+                                               name_idx=len(self.name_mapper_test)-1,
+                                               visualize=None))
+            elif type == 'warm_start':
+                test_sequences.append(SequenceRecurrent(child, representation_type, 'train', delta_t_ms, num_bins,
+                                                        transforms=[], sequence_length=1,
+                                                        name_idx=len(self.name_mapper_test)-1,
+                                                        visualize=None))
+            else:
+                raise Exception('Please provide a valid subtype [standard/warm_start] in config file!')
+
+        self.test_dataset = torch.utils.data.ConcatDataset(test_sequences)
+
+    def get_test_dataset(self):
+        return self.test_dataset
+
+
+    def get_name_mapping_test(self):
+        return self.name_mapper_test
+
+    def summary(self, logger):
+        logger.write_line("================================== Dataloader Summary ====================================", True)
+        logger.write_line("Purpose:\t\t" + self.mode, True)
+        logger.write_line("Loader Type:\t\t" + self.__class__.__name__, True)
+        logger.write_line("Number of Voxel Bins: {}".format(self.test_dataset.datasets[0].num_bins), True)
+

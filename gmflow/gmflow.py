@@ -29,7 +29,8 @@ class GMFlow(nn.Module):
         self.num_transformer_layers = num_transformer_layers
 
         # CNN backbone
-        self.backbone = CNNEncoder(output_dim=feature_channels, num_output_scales=num_scales)
+        # TODO: better way of setting num_channels
+        self.backbone = CNNEncoder(output_dim=feature_channels, num_output_scales=num_scales, num_channels=15)
 
         # Transformer
         self.transformer = FeatureTransformer(num_layers=num_transformer_layers,

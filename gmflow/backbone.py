@@ -40,6 +40,7 @@ class CNNEncoder(nn.Module):
     def __init__(self, output_dim=128,
                  norm_layer=nn.InstanceNorm2d,
                  num_output_scales=1,
+                 num_channels=3,
                  **kwargs,
                  ):
         super(CNNEncoder, self).__init__()
@@ -47,7 +48,7 @@ class CNNEncoder(nn.Module):
 
         feature_dims = [64, 96, 128]
 
-        self.conv1 = nn.Conv2d(3, feature_dims[0], kernel_size=7, stride=2, padding=3, bias=False)  # 1/2
+        self.conv1 = nn.Conv2d(num_channels, feature_dims[0], kernel_size=7, stride=2, padding=3, bias=False)  # 1/2
         self.norm1 = norm_layer(feature_dims[0])
         self.relu1 = nn.ReLU(inplace=True)
 

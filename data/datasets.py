@@ -1,5 +1,8 @@
 # Data loading based on https://github.com/NVIDIA/flownet2-pytorch
 
+import csv
+import json
+from pathlib import Path
 import numpy as np
 import torch
 import torch.utils.data as data
@@ -11,6 +14,10 @@ import os.path as osp
 
 from utils import frame_utils
 from data.transforms import FlowAugmentor, SparseFlowAugmentor
+
+import raft_stuff.utils.helper_functions as helper
+from raft_stuff.loader.loader_dsec import *
+from raft_stuff.utils.logger import *
 
 
 class FlowDataset(data.Dataset):
@@ -125,6 +132,78 @@ class FlowDataset(data.Dataset):
     def __len__(self):
         return len(self.image_list)
 
+
+class DSEC(FlowDataset):
+    def __init__(self, aug_params=None, split='training',
+                 root='datasets/DSEC',
+                 dstype='clean',
+                 load_occlusion=False,
+                 ):
+        super(DSEC, self).__init__(aug_params,
+                                        load_occlusion=load_occlusion,
+                                        )
+
+        image_root = osp.join(root, 'train_events')
+        flow_root = osp.join(root, 'train_flow')
+        train_sequences = []
+        self.timestamps = []
+
+        # TODO: join this with the test one
+        if split == 'test':
+            self.is_test = True
+
+        i = 0
+        for scene in os.listdir(flow_root):
+            file_timestamps = osp.join(flow_root, scene, 'flow', 'forward_timestamps.txt')
+            with open(file_timestamps) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                next(csv_reader, None)  # skip the headers
+                timestamps = []
+                for row in csv_reader:
+                    timestamps.append(row)
+
+            self.flow_list += sorted(glob(osp.join(flow_root, scene, 'flow', 'forward', '*.png')))
+            self.timestamps += timestamps
+
+            for i in range(len(timestamps) - 1):
+                self.image_list += [[timestamps[i], timestamps[i + 1]]]
+                self.extra_info += [(scene, i)]  # scene and frame_id
+            
+            path_seq = Path(osp.join(image_root, scene))
+            train_sequences.append(Sequence(path_seq,
+                                        RepresentationType.VOXEL, 'train', 100, 15,
+                                        transforms=[],
+                                        name_idx=i,
+                                        visualize=None))
+            i += 1
+            
+        self.train_dataset = torch.utils.data.ConcatDataset(train_sequences)
+
+    def __getitem__(self, index):
+
+        #TODO: add istest here
+        index = index % len(self.image_list)
+        valid = None
+
+        
+        img1 = self.train_dataset[index]['event_volume_old'][0]
+        img2 = self.train_dataset[index]['event_volume_new'][0]
+
+        flow, valid = Sequence.load_flow(self.flow_list[index])
+        img1 = np.array(img1).astype(np.uint8)
+        img2 = np.array(img2).astype(np.uint8)
+
+        # TODO: whyyy are we permuting this?
+        #img1 = torch.from_numpy(img1).permute(2, 0, 1).float()
+        #img2 = torch.from_numpy(img2).permute(2, 0, 1).float()
+        #flow = torch.from_numpy(flow).permute(2, 0, 1).float()
+
+        img1 = torch.from_numpy(img1).float()
+        img2 = torch.from_numpy(img2).float()
+        flow = torch.from_numpy(flow).float()
+
+        return img1, img2, flow, valid.float()
+            
 
 class MpiSintel(FlowDataset):
     def __init__(self, aug_params=None, split='training',
@@ -270,7 +349,14 @@ class HD1K(FlowDataset):
 
 def build_train_dataset(args):
     """ Create the data loader for the corresponding training set """
-    if args.stage == 'chairs':
+    if args.stage == 'dsec':
+        aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 'do_flip': True}
+
+        train_dataset = DSEC(aug_params, split='training')
+        print("aaaaaaaaaaaaaaaaaaaaaaa got here")
+        print(len(train_dataset))
+
+    elif args.stage == 'chairs':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 'do_flip': True}
 
         train_dataset = FlyingChairs(aug_params, split='training')
