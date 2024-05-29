@@ -179,17 +179,23 @@ class DSEC(FlowDataset):
             
         self.train_dataset = torch.utils.data.ConcatDataset(train_sequences)
 
+    def __len__(self):
+        # TODO: why is this different than self.image_list
+        return len(self.train_dataset)
+    
     def __getitem__(self, index):
+        print ("----- Getting item " + str(index))
 
         #TODO: add istest here
         index = index % len(self.image_list)
         valid = None
-
         
-        img1 = self.train_dataset[index]['event_volume_old'][0]
-        img2 = self.train_dataset[index]['event_volume_new'][0]
+        img1 = self.train_dataset[index]['event_volume_old']
+        img2 = self.train_dataset[index]['event_volume_new']
 
-        flow, valid = Sequence.load_flow(self.flow_list[index])
+        print ("----- Got images")
+
+        flow, valid = Sequence.load_flow(Path(self.flow_list[index]))
         img1 = np.array(img1).astype(np.uint8)
         img2 = np.array(img2).astype(np.uint8)
 
@@ -201,8 +207,9 @@ class DSEC(FlowDataset):
         img1 = torch.from_numpy(img1).float()
         img2 = torch.from_numpy(img2).float()
         flow = torch.from_numpy(flow).float()
+        valid = torch.from_numpy(valid).float()
 
-        return img1, img2, flow, valid.float()
+        return img1, img2, flow, valid
             
 
 class MpiSintel(FlowDataset):
@@ -353,8 +360,6 @@ def build_train_dataset(args):
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 'do_flip': True}
 
         train_dataset = DSEC(aug_params, split='training')
-        print("aaaaaaaaaaaaaaaaaaaaaaa got here")
-        print(len(train_dataset))
 
     elif args.stage == 'chairs':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 'do_flip': True}

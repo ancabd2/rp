@@ -77,7 +77,9 @@ def flow_16bit_to_float(flow_16bit: np.ndarray):
     # to actually compute something useful:
     flow_16bit = flow_16bit.astype('float')
 
-    flow_map = np.zeros((h, w, 2))
-    flow_map[valid_map[0], valid_map[1], 0] = (flow_16bit[valid_map[0], valid_map[1], 0] - 2 ** 15) / 128
-    flow_map[valid_map[0], valid_map[1], 1] = (flow_16bit[valid_map[0], valid_map[1], 1] - 2 ** 15) / 128
+    # change order of map to ((3, h, w))
+    flow_map = np.zeros((2, h, w))
+    flow_map[0, valid_map[0], valid_map[1]] = (flow_16bit[valid_map[0], valid_map[1], 0] - 2 ** 15) / 128
+    flow_map[1, valid_map[0], valid_map[1]] = (flow_16bit[valid_map[0], valid_map[1], 1] - 2 ** 15) / 128
+
     return flow_map, valid2D

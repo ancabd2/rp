@@ -397,6 +397,7 @@ def main(args):
 
             flow_preds = results_dict['flow_preds']
 
+            print("---- got some preds")
             loss, metrics = flow_loss_func(flow_preds, flow_gt, valid,
                                            gamma=args.gamma,
                                            max_flow=args.max_flow,
@@ -426,7 +427,8 @@ def main(args):
             if args.local_rank == 0:
                 logger.push(metrics)
 
-                logger.add_image_summary(img1, img2, flow_preds, flow_gt)
+                # TODO: the dimensions don't add up so let's not do it for now
+                #logger.add_image_summary(img1, img2, flow_preds, flow_gt)
 
             total_steps += 1
 

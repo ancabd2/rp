@@ -318,8 +318,9 @@ class Sequence(Dataset):
             'timestamp': self.timestamps_flow[index]
         }
         # Save sample for benchmark submission
-        output['save_submission'] = file_index in self.idx_to_visualize
-        output['visualize'] = self.visualize_samples
+        if (self.mode == 'test'):
+            output['save_submission'] = file_index in self.idx_to_visualize
+            output['visualize'] = self.visualize_samples
 
         for i in range(len(names)):
             event_data = self.event_slicer.get_events(ts_start[i], ts_end[i])
