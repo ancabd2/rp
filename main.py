@@ -114,6 +114,8 @@ def get_args_parser():
 
     parser.add_argument('--count_time', action='store_true',
                         help='measure the inference time on sintel')
+    parser.add_argument('--freeze_layers', default=True, type=bool,
+                        help='freeze all layers besides cnn for training')
 
     return parser
 
@@ -162,7 +164,14 @@ def main(args):
                    num_transformer_layers=args.num_transformer_layers,
                    num_time_bins=args.num_time_bins,
                    ).to(device)
-
+    
+    # freeze all layers besides cnn
+    if not args.eval and args.freeze_layers:
+        for param in model.parameters():
+            param.requires_grad = False
+        for param in model.backbone.parameters():
+            param.requires_grad = True
+         
     if not args.eval and not args.submission and not args.inference_dir:
         print('Model definition:')
         print(model)
@@ -202,6 +211,11 @@ def main(args):
         checkpoint = torch.load(args.resume, map_location=loc)
 
         weights = checkpoint['model'] if 'model' in checkpoint else checkpoint
+
+        if (model_without_ddp.backbone.conv1.weight.size() != weights['backbone.conv1.weight']):
+            print("Different sizes for loading checkpoint: resizing the weights of the CNN layer to: " \
+                  + str(model_without_ddp.backbone.conv1.weight.size()))
+            weights['backbone.conv1.weight'] = model_without_ddp.backbone.conv1.weight
 
         model_without_ddp.load_state_dict(weights, strict=args.strict_resume)
 
