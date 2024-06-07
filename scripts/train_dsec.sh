@@ -24,6 +24,7 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=${NUM
 --padding_factor 32 \
 --upsample_factor 4 \
 --num_scales 2 \
+--num_time_bins 3 \
 --attn_splits_list 2 8 \
 --corr_radius_list -1 4 \
 --prop_radius_list -1 1 \

@@ -18,6 +18,7 @@ class GMFlow(nn.Module):
                  num_transformer_layers=6,
                  ffn_dim_expansion=4,
                  num_head=1,
+                 num_time_bins=15,
                  **kwargs,
                  ):
         super(GMFlow, self).__init__()
@@ -30,7 +31,7 @@ class GMFlow(nn.Module):
 
         # CNN backbone
         # TODO: better way of setting num_channels
-        self.backbone = CNNEncoder(output_dim=feature_channels, num_output_scales=num_scales, num_channels=3)
+        self.backbone = CNNEncoder(output_dim=feature_channels, num_output_scales=num_scales, num_channels=num_time_bins)
 
         # Transformer
         self.transformer = FeatureTransformer(num_layers=num_transformer_layers,

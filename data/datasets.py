@@ -138,6 +138,7 @@ class DSEC(FlowDataset):
                  root='datasets/DSEC',
                  dstype='clean',
                  load_occlusion=False,
+                 num_time_bins=15,
                  ):
         super(DSEC, self).__init__(aug_params,
                                         load_occlusion=load_occlusion,
@@ -171,7 +172,7 @@ class DSEC(FlowDataset):
             
             path_seq = Path(osp.join(image_root, scene))
             train_sequences.append(Sequence(path_seq,
-                                        RepresentationType.VOXEL, 'train', 100, 3,
+                                        RepresentationType.VOXEL, 'train', 100, num_bins=num_time_bins,
                                         transforms=[],
                                         name_idx=i,
                                         visualize=None))
@@ -362,7 +363,7 @@ def build_train_dataset(args):
     if args.stage == 'dsec':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 'do_flip': True}
 
-        train_dataset = DSEC(aug_params, split='training')
+        train_dataset = DSEC(aug_params, split='training', num_time_bins = args.num_time_bins)
 
     elif args.stage == 'chairs':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 'do_flip': True}

@@ -65,6 +65,8 @@ def get_args_parser():
     parser.add_argument('--num_head', default=1, type=int)
     parser.add_argument('--attention_type', default='swin', type=str)
     parser.add_argument('--ffn_dim_expansion', default=4, type=int)
+    parser.add_argument('--num_time_bins', default=15, type=int,
+                        help='number of time bins for the event voxel grid representation')
 
     parser.add_argument('--attn_splits_list', default=[2], type=int, nargs='+',
                         help='number of splits in attention')
@@ -158,6 +160,7 @@ def main(args):
                    attention_type=args.attention_type,
                    ffn_dim_expansion=args.ffn_dim_expansion,
                    num_transformer_layers=args.num_transformer_layers,
+                   num_time_bins=args.num_time_bins,
                    ).to(device)
 
     if not args.eval and not args.submission and not args.inference_dir:

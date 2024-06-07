@@ -135,16 +135,10 @@ def validate_dsec(model,
                     attn_splits_list=False,
                     corr_radius_list=False,
                     prop_radius_list=False,
+                    num_time_bins=15,
                     ):
     """ Perform evaluation on the DSEC (test) split """
     model.eval()
-    epe_list = []
-    results = {}
-
-    if with_speed_metric:
-        s0_10_list = []
-        s10_40_list = []
-        s40plus_list = []
 
     """ Read dataset """
     # Load config file
@@ -169,7 +163,8 @@ def validate_dsec(model,
         representation_type=RepresentationType.VOXEL,
         delta_t_ms=100,
         config=config,
-        type=config['subtype'].lower())
+        type=config['subtype'].lower(),
+        num_bins=num_time_bins)
     loader.summary(logger)
     test_set = loader.get_test_dataset()
     visu_add_args = {'name_mapping': loader.get_name_mapping_test()}
@@ -217,33 +212,7 @@ def validate_dsec(model,
                     flow=flow_pr.clone().cpu().numpy(),
                     file_index=int(batch['file_index'][batch_idx].item()),
                 )
-
-    epe_all = np.concatenate(epe_list)
-    epe = np.mean(epe_all)
-    px1 = np.mean(epe_all > 1)
-    px3 = np.mean(epe_all > 3)
-    px5 = np.mean(epe_all > 5)
-    print("Validation Chairs EPE: %.3f, 1px: %.3f, 3px: %.3f, 5px: %.3f" % (epe, px1, px3, px5))
-    results['chairs_epe'] = epe
-    results['chairs_1px'] = px1
-    results['chairs_3px'] = px3
-    results['chairs_5px'] = px5
-
-    if with_speed_metric:
-        s0_10 = np.mean(np.concatenate(s0_10_list))
-        s10_40 = np.mean(np.concatenate(s10_40_list))
-        s40plus = np.mean(np.concatenate(s40plus_list))
-
-        print("Validation Chairs s0_10: %.3f, s10_40: %.3f, s40+: %.3f" % (
-            s0_10,
-            s10_40,
-            s40plus))
-
-        results['chairs_s0_10'] = s0_10
-        results['chairs_s10_40'] = s10_40
-        results['chairs_s40+'] = s40plus
-
-    return results
+    return []
 
 @torch.no_grad()
 def validate_chairs(model,
