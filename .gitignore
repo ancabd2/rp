@@ -1,0 +1,7 @@
+*.pyc
+checkpoints/*
+datasets/*
+pretrained/*
+saved/*
+submission_dsec/*
+tmp/*
