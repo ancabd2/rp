@@ -225,6 +225,10 @@ class Sequence(Dataset):
         #Load and compute timestamps and indices
         if mode == 'test':
             timestamps_images = np.loadtxt(seq_path / 'image_timestamps.txt', dtype='int64')
+            image_indices = np.arange(len(timestamps_images))
+            # But only use every second one because we train at 10 Hz, and we leave away the 1st & last one
+            self.timestamps_flow = timestamps_images[::2][1:-1]
+            self.indices = image_indices[::2][1:-1]
         else:
             with open(seq_path / 'forward_timestamps.txt') as csv_file:
                 csv_reader = csv.reader(csv_file, delimiter=',')
@@ -232,11 +236,9 @@ class Sequence(Dataset):
                 timestamps_images = []
                 for row in csv_reader:
                     timestamps_images.append(int(row[1]))
-        
-        image_indices = np.arange(len(timestamps_images))
-        # But only use every second one because we train at 10 Hz, and we leave away the 1st & last one
-        self.timestamps_flow = timestamps_images[::2][1:-1]
-        self.indices = image_indices[::2][1:-1]
+            image_indices = np.arange(len(timestamps_images))
+            self.timestamps_flow = timestamps_images
+            self.indices = image_indices*2
 
         # Left events only
         if mode == 'train':
@@ -359,7 +361,7 @@ class Sequence(Dataset):
 
 class SequenceRecurrent(Sequence):
     def __init__(self, seq_path: Path, representation_type: RepresentationType, mode: str='test', delta_t_ms: int=100,
-                 num_bins: int=15, transforms=None, sequence_length=1, name_idx=0, visualize=False):
+                 num_bins: int=3, transforms=None, sequence_length=1, name_idx=0, visualize=False):
         super(SequenceRecurrent, self).__init__(seq_path, representation_type, mode, delta_t_ms, transforms=transforms,
                                                 name_idx=name_idx, visualize=visualize)
         self.sequence_length = sequence_length
@@ -422,7 +424,7 @@ class SequenceRecurrent(Sequence):
         return sequence
 
 class DatasetProvider:
-    def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=15,
+    def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=3,
                  type='standard', config=None, visualize=False, mode='test'):
         test_path = dataset_path / 'test'
         assert dataset_path.is_dir(), str(dataset_path)

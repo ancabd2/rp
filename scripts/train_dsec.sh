@@ -7,26 +7,29 @@
 # can be trained on 4x 16GB V100 or 2x 32GB V100 or 2x 40GB A100 gpus
 NUM_GPUS=1
 
+#9900+
 # chairs
 CHECKPOINT_DIR=checkpoints/dsec-gmflow && \
 mkdir -p ${CHECKPOINT_DIR} && \
 CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=${NUM_GPUS} --master_port=9989 main.py \
---resume checkpoints/dsec-gmflow/step_000900.pth \
+--resume pretrained/gmflow_with_refine_kitti-8d3b9786.pth \
 --launcher pytorch \
 --checkpoint_dir ${CHECKPOINT_DIR} \
 --batch_size 1 \
---num_transformer_layers 2 \
 --val_dataset dsec \
 --stage dsec \
 --num_workers 0 \
 --lr 4e-4 \
---image_size 384 512 \
---padding_factor 16 \
---upsample_factor 8 \
 --with_speed_metric \
+--padding_factor 32 \
+--upsample_factor 4 \
+--num_scales 2 \
+--attn_splits_list 2 8 \
+--corr_radius_list -1 4 \
+--prop_radius_list -1 1 \
 --val_freq 10000 \
---save_ckpt_freq 100 \
---num_steps 9000 \
+--save_ckpt_freq 50 \
+--num_steps 10000 \
 2>&1 | tee -a ${CHECKPOINT_DIR}/train.log
 
 # a final note: if your training is terminated unexpectedly, you can resume from the latest checkpoint

@@ -171,7 +171,7 @@ class DSEC(FlowDataset):
             
             path_seq = Path(osp.join(image_root, scene))
             train_sequences.append(Sequence(path_seq,
-                                        RepresentationType.VOXEL, 'train', 100, 15,
+                                        RepresentationType.VOXEL, 'train', 100, 3,
                                         transforms=[],
                                         name_idx=i,
                                         visualize=None))
@@ -184,10 +184,13 @@ class DSEC(FlowDataset):
         return len(self.train_dataset)
     
     def __getitem__(self, index):
+        if (index == 2223):
+            print ("----- Skipping index 2223")
+            index += 1
         print ("----- Getting item " + str(index))
 
         #TODO: add istest here
-        index = index % len(self.image_list)
+        index = index % len(self.train_dataset)
         valid = None
         
         img1 = self.train_dataset[index]['event_volume_old']

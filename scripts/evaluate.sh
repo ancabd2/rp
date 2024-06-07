@@ -16,8 +16,8 @@
 
 CUDA_VISIBLE_DEVICES=0 python main.py \
 --eval \
---resume pretrained/gmflow_things-e9887eda.pth \
---val_dataset things sintel \
+--resume checkpoints/dsec-gmflow/step_010000.pth \
+--val_dataset dsec \
 --with_speed_metric
 
 
@@ -66,6 +66,21 @@ CUDA_VISIBLE_DEVICES=0 python main.py \
 --evaluate_matched_unmatched \
 --resume pretrained/gmflow_with_refine_things-36579974.pth \
 --val_dataset sintel \
+--with_speed_metric \
+--padding_factor 32 \
+--upsample_factor 4 \
+--num_scales 2 \
+--attn_splits_list 2 8 \
+--corr_radius_list -1 4 \
+--prop_radius_list -1 1
+
+
+#### kitti benchmark
+CUDA_VISIBLE_DEVICES=0 python main.py \
+--eval \
+--evaluate_matched_unmatched \
+--resume  pretrained/gmflow_with_refine_kitti-8d3b9786.pth \
+--val_dataset dsec \
 --with_speed_metric \
 --padding_factor 32 \
 --upsample_factor 4 \
