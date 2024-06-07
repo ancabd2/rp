@@ -212,7 +212,7 @@ def main(args):
 
         weights = checkpoint['model'] if 'model' in checkpoint else checkpoint
 
-        if (model_without_ddp.backbone.conv1.weight.size() != weights['backbone.conv1.weight']):
+        if not args.eval and model_without_ddp.backbone.conv1.weight.size() != weights['backbone.conv1.weight']:
             print("Different sizes for loading checkpoint: resizing the weights of the CNN layer to: " \
                   + str(model_without_ddp.backbone.conv1.weight.size()))
             weights['backbone.conv1.weight'] = model_without_ddp.backbone.conv1.weight

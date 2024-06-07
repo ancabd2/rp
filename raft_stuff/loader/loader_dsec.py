@@ -210,9 +210,6 @@ class Sequence(Dataset):
         self.width = 640
         self.num_bins = num_bins
 
-        # Just for now, we always train with num_bins=15
-        # assert self.num_bins==15
-
         # Set event representation
         self.voxel_grid = None
         if representation_type == RepresentationType.VOXEL:
@@ -235,7 +232,7 @@ class Sequence(Dataset):
                 next(csv_reader, None)  # skip the headers
                 timestamps_images = []
                 for row in csv_reader:
-                    timestamps_images.append(int(row[1]))
+                    timestamps_images.append(int(row[0]))
             image_indices = np.arange(len(timestamps_images))
             self.timestamps_flow = timestamps_images
             self.indices = image_indices*2
@@ -326,6 +323,10 @@ class Sequence(Dataset):
 
         for i in range(len(names)):
             event_data = self.event_slicer.get_events(ts_start[i], ts_end[i])
+
+            if event_data is None:
+                # TODO: find a value for this data
+                continue
 
             p = event_data['p']
             t = event_data['t']

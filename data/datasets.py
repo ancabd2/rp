@@ -166,8 +166,8 @@ class DSEC(FlowDataset):
             self.flow_list += sorted(glob(osp.join(flow_root, scene, 'flow', 'forward', '*.png')))
             self.timestamps += timestamps
 
-            for i in range(len(timestamps) - 1):
-                self.image_list += [[timestamps[i], timestamps[i + 1]]]
+            for i in range(len(timestamps)):
+                self.image_list += [[timestamps[i][0], timestamps[i][1]]]
                 self.extra_info += [(scene, i)]  # scene and frame_id
             
             path_seq = Path(osp.join(image_root, scene))
@@ -181,13 +181,9 @@ class DSEC(FlowDataset):
         self.train_dataset = torch.utils.data.ConcatDataset(train_sequences)
 
     def __len__(self):
-        # TODO: why is this different than self.image_list
         return len(self.train_dataset)
     
     def __getitem__(self, index):
-        if (index == 2223):
-            print ("----- Skipping index 2223")
-            index += 1
         print ("----- Getting item " + str(index))
 
         #TODO: add istest here
