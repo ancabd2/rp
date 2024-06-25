@@ -238,7 +238,7 @@ def main(args):
                                            attn_splits_list=args.attn_splits_list,
                                            corr_radius_list=args.corr_radius_list,
                                            prop_radius_list=args.prop_radius_list,
-                                           )
+                                           num_time_bins=args.num_time_bins)
 
             val_results.update(results_dict)
 

@@ -16,7 +16,15 @@
 
 CUDA_VISIBLE_DEVICES=0 python main.py \
 --eval \
---resume checkpoints/dsec-gmflow/step_010000.pth \
+--resume pretrained/dsec_7200_5.pth \
+--num_time_bins 5 \
+--image_size 384 512 \
+--padding_factor 32 \
+--upsample_factor 4 \
+--num_scales 2 \
+--attn_splits_list 2 8 \
+--corr_radius_list -1 4 \
+--prop_radius_list -1 1 \
 --val_dataset dsec \
 --with_speed_metric
 
